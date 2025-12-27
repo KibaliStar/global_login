@@ -137,11 +137,20 @@ class AuthService {
     /**
      * Prüft ob Gerät/IP neu ist (vereinfacht)
      */
-    private static function isNewDevice($userId, $ip) {
-        // In Produktion: Komplexere Device-Erkennung
-        // Für jetzt: Immer false zurückgeben (keine Device-Erkennung)
+private static function isNewDevice($userId, $ip) {
+    // Erweiterte Device-Erkennung
+    try {
+        require_once __DIR__ . '/DeviceService.php';
+        $deviceService = new \App\Services\DeviceService();
+        
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        return !$deviceService->isDeviceKnown($userId, $ip, $userAgent);
+        
+    } catch (Exception $e) {
+        error_log("DeviceService error: " . $e->getMessage());
         return false;
     }
+}
     
     // Registrierung bleibt gleich
     public static function register($username, $email, $password) {
