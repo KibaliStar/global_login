@@ -1,0 +1,28 @@
+[1mdiff --git a/src/Services/AuthService.php b/src/Services/AuthService.php[m
+[1mindex 778b572..4c68f3c 100644[m
+[1m--- a/src/Services/AuthService.php[m
+[1m+++ b/src/Services/AuthService.php[m
+[36m@@ -137,11 +137,20 @@[m [mclass AuthService {[m
+     /**[m
+      * Prüft ob Gerät/IP neu ist (vereinfacht)[m
+      */[m
+[31m-    private static function isNewDevice($userId, $ip) {[m
+[31m-        // In Produktion: Komplexere Device-Erkennung[m
+[31m-        // Für jetzt: Immer false zurückgeben (keine Device-Erkennung)[m
+[32m+[m[32mprivate static function isNewDevice($userId, $ip) {[m
+[32m+[m[32m    // Erweiterte Device-Erkennung[m
+[32m+[m[32m    try {[m
+[32m+[m[32m        require_once __DIR__ . '/DeviceService.php';[m
+[32m+[m[32m        $deviceService = new \App\Services\DeviceService();[m
+[32m+[m[41m        [m
+[32m+[m[32m        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';[m
+[32m+[m[32m        return !$deviceService->isDeviceKnown($userId, $ip, $userAgent);[m
+[32m+[m[41m        [m
+[32m+[m[32m    } catch (Exception $e) {[m
+[32m+[m[32m        error_log("DeviceService error: " . $e->getMessage());[m
+         return false;[m
+     }[m
+[32m+[m[32m}[m
+     [m
+     // Registrierung bleibt gleich[m
+     public static function register($username, $email, $password) {[m

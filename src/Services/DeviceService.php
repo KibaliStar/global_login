@@ -1,8 +1,8 @@
 <?php
 
-namespace GlobalLogin\Services;
+namespace App\Services;
 
-use GlobalLogin\Models\Database;
+use App\Models\Database;
 use PDO;
 
 class DeviceService
@@ -11,7 +11,7 @@ class DeviceService
 
     public function __construct()
     {
-        $this->db = Database::getInstance()->getConnection();
+        $this->db = Database::getInstance();
     }
 
     /**

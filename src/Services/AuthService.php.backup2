@@ -40,11 +40,8 @@ class AuthService {
             ];
         }
         
-        // 5. Normales Login (KEINE 2FA)
+        // 5. Normales Login
         $token = JWTHandler::generateToken($user['id'], $user['email'], $user['username']);
-        
-        // Device registrieren für zukünftige Logins
-        self::registerDeviceAfterLogin($user['id']);
         
         return [
             'success' => true,
@@ -59,46 +56,31 @@ class AuthService {
     }
     
     /**
-     * Device nach erfolgreichem Login registrieren
-     */
-    private static function registerDeviceAfterLogin($userId) {
-        try {
-            require_once __DIR__ . '/DeviceService.php';
-            $deviceService = new \App\Services\DeviceService();
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '';
-            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-            $deviceService->addDevice($userId, $ip, $userAgent);
-        } catch (Exception $e) {
-            error_log("Device registration failed: " . $e->getMessage());
-        }
-    }
-    
-    /**
      * Entscheidet basierend auf Config, ob 2FA benötigt wird
      */
-private static function requiresTwoFactorAuth($userId) {
-    $mode = defined('TFA_MODE') ? constant('TFA_MODE') : 'optional';
-    
-    switch ($mode) {
-        case 'disabled':
-            return false;
-            
-        case 'always':
-            return true;
-            
-        case 'suspicious':
-            return self::hasSuspiciousActivity($userId);
-            
-        case 'optional':
-        default:
-            // User hat 2FA selbst aktiviert?
-            if (TwoFactorService::is2FAEnabled($userId)) {
+    private static function requiresTwoFactorAuth($userId) {
+        $mode = defined('TFA_MODE') ? constant('TFA_MODE') : 'optional';
+        
+        switch ($mode) {
+            case 'disabled':
+                return false;
+                
+            case 'always':
                 return true;
-            }
-            // Bei optional: KEINE suspicious checks!
-            return false; // ← ÄNDERE DIESE ZEILE
+                
+            case 'suspicious':
+                return self::hasSuspiciousActivity($userId);
+                
+            case 'optional':
+            default:
+                // User hat 2FA selbst aktiviert?
+                if (TwoFactorService::is2FAEnabled($userId)) {
+                    return true;
+                }
+                // Verdächtige Aktivität?
+                return self::hasSuspiciousActivity($userId);
+        }
     }
-}
     
     /**
      * Prüft auf verdächtige Aktivität (für 'suspicious' Mode)
@@ -155,20 +137,20 @@ private static function requiresTwoFactorAuth($userId) {
     /**
      * Prüft ob Gerät/IP neu ist (vereinfacht)
      */
-    private static function isNewDevice($userId, $ip) {
-        // Erweiterte Device-Erkennung
-        try {
-            require_once __DIR__ . '/DeviceService.php';
-            $deviceService = new \App\Services\DeviceService();
-            
-            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-            return !$deviceService->isDeviceKnown($userId, $ip, $userAgent);
-            
-        } catch (Exception $e) {
-            error_log("DeviceService error: " . $e->getMessage());
-            return false;
-        }
+private static function isNewDevice($userId, $ip) {
+    // Erweiterte Device-Erkennung
+    try {
+        require_once __DIR__ . '/DeviceService.php';
+        $deviceService = new \App\Services\DeviceService();
+        
+        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        return !$deviceService->isDeviceKnown($userId, $ip, $userAgent);
+        
+    } catch (Exception $e) {
+        error_log("DeviceService error: " . $e->getMessage());
+        return false;
     }
+}
     
     // Registrierung bleibt gleich
     public static function register($username, $email, $password) {

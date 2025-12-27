@@ -1,15 +1,15 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-header('Content-Type: application/json');
+// header('Content-Type: application/json');
 
 try {
     require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../config/error-config.php';
+    require_once __DIR__ . '/../config/error-config.php';
     require_once __DIR__ . '/../config/autoload.php';
     require_once __DIR__ . '/../vendor/autoload.php';
     // require_once __DIR__ . '/../config/2fa-config.php';
-require_once __DIR__ . '/../config/error-config.php';
+    // require_once __DIR__ . '/../config/error-config.php';
     
     $request = $_SERVER['REQUEST_URI'] ?? '/';
     if (strpos($request, '?') !== false) {
@@ -20,26 +20,33 @@ require_once __DIR__ . '/../config/error-config.php';
     // === ROUTING ===
     
     // GET / - API Root
+    // if ($request === '/' && $method === 'GET') {
+    //     echo json_encode([
+    //         'service' => 'Global Login API',
+    //         'status' => 'online',
+    //         'endpoints' => [
+    //             'GET /' => 'API Root',
+    //             'GET /health' => 'Health check',
+    //             'POST /register' => 'User registration',
+    //             'POST /login' => 'User login',
+    //             'GET /verify-email' => 'Email verification',
+    //             'GET /validate-token' => 'Validate JWT token',
+    //             'POST /request-password-reset' => 'Request password reset',
+    //             'GET /reset-password' => 'Validate reset token',
+    //             'POST /reset-password' => 'Set new password',
+    //             'POST /enable-2fa' => 'Enable 2FA for user',
+    //             'POST /disable-2fa' => 'Disable 2FA for user',
+    //             'POST /request-2fa' => 'Request 2FA code',
+    //             'POST /verify-2fa' => 'Verify 2FA code'
+    //         ]
+    //     ]);
+    //     exit;
+    // }
+
+    // GET / - Landing Page
     if ($request === '/' && $method === 'GET') {
-        echo json_encode([
-            'service' => 'Global Login API',
-            'status' => 'online',
-            'endpoints' => [
-                'GET /' => 'API Root',
-                'GET /health' => 'Health check',
-                'POST /register' => 'User registration',
-                'POST /login' => 'User login',
-                'GET /verify-email' => 'Email verification',
-                'GET /validate-token' => 'Validate JWT token',
-                'POST /request-password-reset' => 'Request password reset',
-                'GET /reset-password' => 'Validate reset token',
-                'POST /reset-password' => 'Set new password',
-                'POST /enable-2fa' => 'Enable 2FA for user',
-                'POST /disable-2fa' => 'Disable 2FA for user',
-                'POST /request-2fa' => 'Request 2FA code',
-                'POST /verify-2fa' => 'Verify 2FA code'
-            ]
-        ]);
+        // HTML Landing Page anzeigen
+        readfile(__DIR__ . '/welcome.html');
         exit;
     }
     
@@ -95,8 +102,8 @@ require_once __DIR__ . '/../config/error-config.php';
         $code = $_GET['code'] ?? '';
         
         if (empty($code)) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Verification code required']);
+            header('Content-Type: text/html; charset=utf-8');
+            readfile(__DIR__ . '/verification-error.html');
             exit;
         }
         
@@ -104,10 +111,11 @@ require_once __DIR__ . '/../config/error-config.php';
         $result = App\Services\EmailVerificationService::verifyCode($code);
         
         if ($result) {
-            echo json_encode(['success' => true, 'message' => 'Email verified successfully!']);
+            header('Content-Type: text/html; charset=utf-8');
+            readfile(__DIR__ . '/verification-success.html');
         } else {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => 'Invalid or expired verification code']);
+            header('Content-Type: text/html; charset=utf-8');
+            readfile(__DIR__ . '/verification-error.html');
         }
         exit;
     }

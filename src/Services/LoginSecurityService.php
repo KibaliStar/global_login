@@ -1,8 +1,8 @@
 <?php
 
-namespace GlobalLogin\Services;
+namespace App\Services;
 
-use GlobalLogin\Models\Database;
+use App\Models\Database;
 use PDO;
 
 class LoginSecurityService
@@ -12,7 +12,7 @@ class LoginSecurityService
 
     public function __construct()
     {
-        $this->db = Database::getInstance()->getConnection();
+        $this->db = Database::getInstance();
         $this->deviceService = new DeviceService();
     }
 

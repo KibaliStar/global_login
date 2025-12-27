@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Login - Zentrale Authentifizierung</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { background: #2196F3; color: white; padding: 20px; border-radius: 5px; }
+        .endpoints { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .endpoint { margin: 5px 0; font-family: monospace; }
+        .login-form { margin: 30px 0; }
+        input { padding: 10px; margin: 5px; width: 200px; }
+        button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌐 Global Login System</h1>
+        <p>Zentrale Authentifizierung für alle deine Apps und Spiele</p>
+    </div>
+    
+    <div class="login-form">
+        <h3>Test-Login:</h3>
+        <input type="email" id="email" placeholder="Email" value="marcobeigfn@kibali.de">
+        <input type="password" id="password" placeholder="Passwort">
+        <button onclick="login()">Login Testen</button>
+        <div id="loginResult" style="margin-top: 10px;"></div>
+    </div>
+    
+    <div class="endpoints">
+        <h3>API Endpoints:</h3>
+        <div class="endpoint"><strong>POST</strong> /register - Benutzer registrieren</div>
+        <div class="endpoint"><strong>POST</strong> /login - Einloggen</div>
+        <div class="endpoint"><strong>GET</strong> /verify-email - Email verifizieren</div>
+        <div class="endpoint"><strong>GET</strong> /validate-token - Token prüfen</div>
+        <div class="endpoint"><strong>POST</strong> /request-password-reset - Passwort zurücksetzen</div>
+        <div class="endpoint"><strong>POST</strong> /enable-2fa - 2FA aktivieren</div>
+    </div>
+    
+    <script>
+    async function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, password})
+        });
+        
+        const data = await response.json();
+        const resultDiv = document.getElementById('loginResult');
+        
+        if (data.success) {
+            if (data.requires_2fa) {
+                resultDiv.innerHTML = `<span style="color: orange;">2FA benötigt! Check deine Emails.</span>`;
+            } else {
+                resultDiv.innerHTML = `<span style="color: green;">✅ Login erfolgreich! Token: ${data.token.substring(0, 20)}...</span>`;
+            }
+        } else {
+            resultDiv.innerHTML = `<span style="color: red;">❌ ${data.message}</span>`;
+        }
+    }
+    </script>
+</body>
+</html>

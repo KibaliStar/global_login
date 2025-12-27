@@ -4,7 +4,7 @@
 // 'optional'  - User kann 2FA selbst aktivieren (Standard)
 // 'always'    - 2FA immer für alle User erforderlich
 // 'suspicious'- 2FA nur bei verdächtigen Logins (neues Gerät, Fehlversuche)
-define('TFA_MODE', 'optional');
+define('TFA_MODE', 'disabled');
 
 // Bei 'suspicious' Mode: Wie viele fehlgeschlagene Login-Versuche lösen 2FA aus?
 define('TFA_FAILED_ATTEMPTS_THRESHOLD', 3);
