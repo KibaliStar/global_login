@@ -134,6 +134,52 @@ try {
         }
         exit;
     }
+
+        // GET /api/user/{id}/applications - Get user's active applications
+    if (preg_match('#^/api/user/(\d+)/applications$#', $request, $matches) && $method === 'GET') {
+        $userId = (int)$matches[1];
+        
+        // Token validieren
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? '';
+        
+        if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $tokenMatches)) {
+            http_response_code(401);
+            echo json_encode(['error' => 'No token provided']);
+            exit;
+        }
+        
+        require_once __DIR__ . '/../src/Utils/JWTHandler.php';
+        $tokenData = App\Utils\JWTHandler::decodeToken($tokenMatches[1]);
+        
+        if (!$tokenData || $tokenData->user_id != $userId) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+        
+        // Datenbank abfragen
+        require_once __DIR__ . '/../src/Models/Database.php';
+        $db = App\Models\Database::getInstance()->getConnection();
+        
+        $stmt = $db->prepare("
+            SELECT app_id, initialized_at, last_accessed, is_active 
+            FROM user_applications 
+            WHERE user_id = ? AND is_active = 1
+            ORDER BY initialized_at DESC
+        ");
+        $stmt->execute([$userId]);
+        $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        echo json_encode([
+            'success' => true,
+            'user_id' => $userId,
+            'applications' => $applications
+        ]);
+        exit;
+    }
+    
+    // POST /request-password-reset - Request password reset
     
     // POST /request-password-reset - Request password reset
     if ($request === '/request-password-reset' && $method === 'POST') {
