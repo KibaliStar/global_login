@@ -178,8 +178,68 @@ try {
         ]);
         exit;
     }
-    
-    // POST /request-password-reset - Request password reset
+
+        // POST /api/applications/register - Register user application
+    if ($request === '/api/applications/register' && $method === 'POST') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $appId = $data['app_id'] ?? '';
+        $userId = $data['user_id'] ?? 0;
+        
+        if (empty($appId) || empty($userId)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'app_id and user_id required']);
+            exit;
+        }
+        
+        // Valide App IDs prüfen
+        $validApps = ['wusler3', 'lernapp', 'chat'];
+        if (!in_array($appId, $validApps)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid app_id']);
+            exit;
+        }
+        
+        // Token validieren (nur App selbst darf registrieren)
+        $headers = getallheaders();
+        $authHeader = $headers['Authorization'] ?? '';
+        
+        if (!preg_match('/Bearer\s+(.*)$/i', $authHeader, $tokenMatches)) {
+            http_response_code(401);
+            echo json_encode(['error' => 'No token provided']);
+            exit;
+        }
+        
+        require_once __DIR__ . '/../src/Utils/JWTHandler.php';
+        $tokenData = App\Utils\JWTHandler::decodeToken($tokenMatches[1]);
+        
+        if (!$tokenData) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Invalid token']);
+            exit;
+        }
+        
+        // Datenbank: UPSERT (INSERT or UPDATE)
+        require_once __DIR__ . '/../src/Models/Database.php';
+        $db = App\Models\Database::getInstance()->getConnection();
+        
+        $stmt = $db->prepare("
+            INSERT INTO user_applications (user_id, app_id, is_active) 
+            VALUES (?, ?, 1)
+            ON DUPLICATE KEY UPDATE 
+                is_active = 1,
+                last_accessed = CURRENT_TIMESTAMP
+        ");
+        
+        $success = $stmt->execute([$userId, $appId]);
+        
+        echo json_encode([
+            'success' => $success,
+            'message' => $success ? 'Application registered' : 'Registration failed'
+        ]);
+        exit;
+    }
+
+
     
     // POST /request-password-reset - Request password reset
     if ($request === '/request-password-reset' && $method === 'POST') {
